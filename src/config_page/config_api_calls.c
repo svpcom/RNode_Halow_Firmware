@@ -20,6 +20,7 @@
 #include "utils.h"
 #include "device.h"
 #include "statistics.h"
+#include "telemetry.h"
 #include "hal/spi_nor.h"
 
 /* -------------------------------------------------------------------------- */
@@ -106,6 +107,22 @@ static int32_t api_err( cJSON *out, int32_t rc, const char *msg ){
         (void)cJSON_AddStringToObject(out, "err", msg);
     }
     return rc;
+}
+
+static bool json_get_float( const cJSON *o, const char *k, float *out ){
+    const cJSON *v;
+
+    if ((o == NULL) || (k == NULL) || (out == NULL)) {
+        return false;
+    }
+
+    v = cJSON_GetObjectItemCaseSensitive(o, k);
+    if (!cJSON_IsNumber(v)) {
+        return false;
+    }
+
+    *out = (float)v->valuedouble;
+    return true;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -640,6 +657,90 @@ fail:
     return rc;
 }
 
+int32_t web_api_telemetry_cfg_get( const cJSON *in, cJSON *out ){
+    telemetry_config_t cfg;
+    char lxmf_hex[33];
+
+    (void)in;
+
+    if (out == NULL) {
+        return WEB_API_RC_BAD_REQUEST;
+    }
+
+    telemetry_config_load(&cfg);
+
+    cJSON_AddBoolToObject(out, "en",  cfg.enabled);
+    cJSON_AddBoolToObject(out, "ext", cfg.extended_enabled);
+    cJSON_AddNumberToObject(out, "prd",  (double)cfg.send_period_s);
+    cJSON_AddStringToObject(out, "host", cfg.domain);
+    cJSON_AddNumberToObject(out, "port", (double)cfg.port);
+    cJSON_AddNumberToObject(out, "lat", cfg.latitude);
+    cJSON_AddNumberToObject(out, "lon", cfg.longitude);
+    cJSON_AddBoolToObject(out, "dir_en", cfg.directional);
+    cJSON_AddNumberToObject(out, "dir",  (double)cfg.direction);
+    cJSON_AddStringToObject(out, "usr", cfg.username);
+    cJSON_AddStringToObject(out, "pwd", cfg.password);
+    cJSON_AddStringToObject(out, "top", cfg.topic);
+    cJSON_AddStringToObject(out, "name", cfg.nodename);
+
+    bin16_to_hex32(cfg.lxmf, lxmf_hex);
+    cJSON_AddStringToObject(out, "lxmf", lxmf_hex);
+
+    return WEB_API_RC_OK;
+}
+
+int32_t web_api_telemetry_cfg_post( const cJSON *in, cJSON *out ){
+    telemetry_config_t cfg;
+    bool b;
+    int v;
+    float f;
+    char lxmf_hex[33];
+
+    if (in == NULL || !cJSON_IsObject(in) || out == NULL) {
+        return api_err(out, WEB_API_RC_BAD_REQUEST, "bad json");
+    }
+
+    telemetry_config_load(&cfg);
+
+    if (json_get_bool(in, "en", &b))      { cfg.enabled = b ? 1 : 0; }
+    if (json_get_bool(in, "ext", &b))     { cfg.extended_enabled = b ? 1 : 0; }
+
+    if (json_get_int(in, "prd", &v))      { if (v >= 1) cfg.send_period_s = (uint32_t)v; }
+    if (json_get_int(in, "port", &v))     { if (v >= 0 && v <= 65535) cfg.port = (uint16_t)v; }
+
+    if (json_get_float(in, "lat", &f))    { cfg.latitude = f; }
+    if (json_get_float(in, "lon", &f))    { cfg.longitude = f; }
+
+    if (json_get_bool(in, "dir_en", &b))  { cfg.directional = b ? 1 : 0; }
+    if (json_get_int(in, "dir", &v))      { if (v >= -32768 && v <= 32767) cfg.direction = (int16_t)v; }
+
+    (void)json_get_string(in, "host", cfg.domain,   sizeof(cfg.domain));
+    (void)json_get_string(in, "usr",  cfg.username, sizeof(cfg.username));
+    (void)json_get_string(in, "pwd",  cfg.password, sizeof(cfg.password));
+    (void)json_get_string(in, "top",  cfg.topic,    sizeof(cfg.topic));
+    (void)json_get_string(in, "name", cfg.nodename, sizeof(cfg.nodename));
+
+    if (json_get_string(in, "lxmf", lxmf_hex, sizeof(lxmf_hex))) {
+        if (strlen(lxmf_hex) == 32) {
+            (void)hex32_to_bin16(lxmf_hex, cfg.lxmf);
+        }
+    }
+
+    telemetry_config_save(&cfg);
+
+    web_api_notify_change();
+    return web_api_telemetry_cfg_get(NULL, out);
+}
+
+int32_t web_api_telemetry_send_post( const cJSON *in, cJSON *out ){
+    telemetry_send_now();
+    return 0;
+}
+
+int32_t web_api_reset_to_default_post( const cJSON *in, cJSON *out ){
+    return 0;
+}
+
 int32_t web_api_all_get( const cJSON *in, cJSON *out ){
     cJSON *halow = NULL;
     cJSON *net   = NULL;
@@ -650,6 +751,7 @@ int32_t web_api_all_get( const cJSON *in, cJSON *out ){
     cJSON *stat  = NULL;
     cJSON *dev   = NULL;
     cJSON *radio = NULL;
+    cJSON *telemetry = NULL;
 
     int32_t rc;
 
@@ -670,8 +772,9 @@ int32_t web_api_all_get( const cJSON *in, cJSON *out ){
     stat  = cJSON_CreateObject();
     dev   = cJSON_CreateObject();
     radio = cJSON_CreateObject();
+    telemetry = cJSON_CreateObject();
 
-    if (!halow || !net || !tcp || !lbt || !ota || !stat || !dev || !radio) {
+    if (!halow || !net || !tcp || !lbt || !ota || !telemetry || !stat || !dev || !radio) {
         rc = WEB_API_RC_INTERNAL;
         goto fail;
     }
@@ -697,6 +800,9 @@ int32_t web_api_all_get( const cJSON *in, cJSON *out ){
     rc = web_api_radio_stat_get(NULL, radio);
     if (rc != WEB_API_RC_OK) goto fail;
 
+    rc = web_api_telemetry_cfg_get(NULL, telemetry);
+    if (rc != WEB_API_RC_OK) goto fail;
+
     cJSON_AddItemToObject(stat, "device", dev);    dev = NULL;
     cJSON_AddItemToObject(stat, "radio",  radio);  radio = NULL;
 
@@ -705,6 +811,7 @@ int32_t web_api_all_get( const cJSON *in, cJSON *out ){
     cJSON_AddItemToObject(out, "tcp",   tcp);     tcp   = NULL;
     cJSON_AddItemToObject(out, "lbt",   lbt);     lbt   = NULL;
     cJSON_AddItemToObject(out, "ota",   ota);     ota   = NULL;
+    cJSON_AddItemToObject(out, "telemetry", telemetry); telemetry = NULL;
 
     cJSON_AddItemToObject(out, "stat",  stat);    stat  = NULL;
 
@@ -720,6 +827,7 @@ fail:
     cJSON_Delete(stat);
     cJSON_Delete(dev);
     cJSON_Delete(radio);
+    cJSON_Delete(telemetry);
     return rc;
 }
 

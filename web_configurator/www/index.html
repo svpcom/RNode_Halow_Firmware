@@ -4,28 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Device Configurator</title>
-    <!--
-      Simple offline-friendly UI for configuring an embedded radio device.
-      The application does not rely on external CDNs or frameworks – all
-      styles and scripts are bundled locally.  Navigation is tab‑based
-      and the individual panels map directly to the device’s various
-      subsystems.  On load the page requests the full configuration
-      via a GET to `/api/get_all`, and every second it updates the
-      statistics shown on the dashboard via `/api/get_stat`.  After
-      saving a subsection the UI refreshes itself by calling the same
-      `get_all` endpoint.
-    -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <nav class="tabs">
         <button data-tab="dashboard" class="active">Dashboard</button>
         <button data-tab="settings">Device Settings</button>
+        <button data-tab="telemetry">Telemetry</button>
         <button data-tab="firmware">Firmware Update</button>
     </nav>
 
     <main>
-        <!-- Dashboard tab -->
         <section id="dashboard" class="tab-content active">
             <h2>Radio Statistics</h2>
             <table class="stats-table">
@@ -41,16 +30,14 @@
                 <tr><th>Current RX power level</th><td id="stat_bg_pwr_now_dbm">--</td></tr>
                 <tr><th>Noise floor power level</th><td id="stat_bg_pwr_dbm">--</td></tr>
                 </tbody>
-			</table>
-	
-			<div class="panel-actions">
-				<button id="stat_reset_btn">
-					Reset statistics
-				</button>
-			</div>
+            </table>
 
-			<h2>Device Statistics</h2>
-			<table class="stats-table">
+            <div class="panel-actions">
+                <button id="stat_reset_btn">Reset statistics</button>
+            </div>
+
+            <h2>Device Statistics</h2>
+            <table class="stats-table">
                 <tbody>
                 <tr><th>Uptime</th><td id="stat_uptime">--</td></tr>
                 <tr><th>Hostname</th><td id="stat_hostname">--</td></tr>
@@ -62,9 +49,7 @@
             </table>
         </section>
 
-        <!-- Device Settings tab -->
         <section id="settings" class="tab-content">
-            <!-- RF Settings Panel -->
             <div class="panel">
                 <h3>RF Settings</h3>
                 <label>
@@ -107,7 +92,6 @@
                 </div>
             </div>
 
-            <!-- Listen Before Talk Panel -->
             <div class="panel">
                 <h3>Listen Before Talk (LBT)</h3>
                 <fieldset id="lbt_fields">
@@ -126,7 +110,6 @@
                 </div>
             </div>
 
-            <!-- Network Settings Panel -->
             <div class="panel">
                 <h3>Network Settings</h3>
                 <label class="toggle-label">
@@ -152,7 +135,6 @@
                 </div>
             </div>
 
-            <!-- TCP Radio Bridge Panel -->
             <div class="panel">
                 <h3>TCP Radio Bridge</h3>
                 <label class="toggle-label">
@@ -180,32 +162,124 @@
             </div>
         </section>
 
-        <!-- Firmware Update tab -->
-		<section id="firmware" class="tab-content">
-			<div class="panel">
-				<h3>Firmware Update (DO NOT WORK FOR NOW)</h3>
+        <section id="telemetry" class="tab-content">
+            <div class="panel">
+                <h3>Telemetry Settings</h3>
+                <p class="note">
+                    Open the public map here:
+                    <a class="inline-link" href="https://map.rnode-halow.ru" target="_blank" rel="noopener noreferrer">map.rnode-halow.ru</a>
+                </p>
 
-				<label>
-					<span>Current firmware version</span>
-					<span id="fw_current">--</span>
-				</label>
+                <label class="toggle-label">
+                    <span>Enable telemetry</span>
+                    <input type="checkbox" id="telemetry_en">
+                </label>
 
-				<label>
-					<span>Firmware file</span>
-					<input id="fw_file" type="file" accept=".bin,.img,.fw,.uf2,application/octet-stream">
-				</label>
+                <fieldset id="telemetry_fields">
+                    <label>
+                        <span>Node name</span>
+                        <input type="text" id="telemetry_name" spellcheck="false">
+                    </label>
+                    <label>
+                        <span>Latitude</span>
+                        <input type="text" id="telemetry_lat" placeholder="59.437 or 59°26'13.2&quot;N" spellcheck="false">
+                    </label>
+                    <p class="field-hint">Use decimal degrees or DMS. Examples: <code>59.437</code>, <code>59,437</code>, <code>59°26'13.2&quot;N</code>.</p>
+                    <label>
+                        <span>Longitude</span>
+                        <input type="text" id="telemetry_lon" placeholder="24.7536 or 24°45'13&quot;E" spellcheck="false">
+                    </label>
+                    <p class="field-hint">Use decimal degrees or DMS. Examples: <code>24.7536</code>, <code>24,7536</code>, <code>24°45'13&quot;E</code>.</p>
+                    <label class="toggle-label">
+                        <span>Enable extended telemetry</span>
+                        <input type="checkbox" id="telemetry_ext">
+                    </label>
+                    <p class="field-hint">Extended telemetry includes RX/TX packet counters and RX/TX byte counters.</p>
+                    <label>
+                        <span>Send period</span>
+                        <select id="telemetry_prd">
+                            <option value="300">5 min</option>
+                            <option value="900">15 min</option>
+                            <option value="1800">30 min</option>
+                            <option value="3600">1 hour</option>
+                            <option value="10800">3 hours</option>
+                            <option value="21600">6 hours</option>
+                            <option value="43200">12 hours</option>
+                            <option value="86400">24 hours</option>
+                        </select>
+                    </label>
+                    <label>
+                        <span>MQTT host</span>
+                        <input type="text" id="telemetry_host" placeholder="example.com">
+                    </label>
+                    <label>
+                        <span>MQTT port</span>
+                        <input type="number" id="telemetry_port" min="0" max="65535" step="1">
+                    </label>
+                    <label>
+                        <span>MQTT username</span>
+                        <input type="text" id="telemetry_usr" spellcheck="false">
+                    </label>
+                    <label>
+                        <span>MQTT password</span>
+                        <input type="password" id="telemetry_pwd" spellcheck="false">
+                    </label>
+                    <label>
+                        <span>MQTT topic</span>
+                        <input type="text" id="telemetry_top" spellcheck="false">
+                    </label>
+                    <label class="toggle-label">
+                        <span>Directional antenna</span>
+                        <input type="checkbox" id="telemetry_dir_en">
+                    </label>
+                    <label>
+                        <span>Direction (°)</span>
+                        <input type="number" id="telemetry_dir" min="-32768" max="32767" step="1">
+                    </label>
+                    <label>
+                        <span>LXMF address</span>
+                        <input type="text" id="telemetry_lxmf" maxlength="32" placeholder="32 hex chars" spellcheck="false" autocomplete="off">
+                    </label>
+                    <p class="field-hint">Optional contact address. Exactly 32 hexadecimal characters, for example <code>00112233445566778899AABBCCDDEEFF</code>.</p>
+                </fieldset>
 
-				<label>
-					<span>Console</span>
-				</label>
+                <div id="telemetry_status" class="status-message" aria-live="polite"></div>
 
-				<div id="fw_console" class="fw-console"></div>
+                <div class="panel-actions panel-actions-wrap">
+                    <button id="save_telemetry" disabled>Save</button>
+                    <button id="telemetry_send_btn" class="secondary">Send now</button>
+                </div>
+            </div>
+        </section>
 
-				<div class="panel-actions">
-					<button id="fw_flash" disabled>Flash</button>
-				</div>
-			</div>
-		</section>
+        <section id="firmware" class="tab-content">
+            <div class="panel">
+                <h3>Firmware Update (DO NOT WORK FOR NOW)</h3>
+
+                <label>
+                    <span>Current firmware version</span>
+                    <span id="fw_current">--</span>
+                </label>
+
+                <label>
+                    <span>Firmware file</span>
+                    <input id="fw_file" type="file" accept=".bin,.img,.fw,.uf2,application/octet-stream">
+                </label>
+
+                <label>
+                    <span>Console</span>
+                </label>
+
+                <div id="fw_console" class="fw-console"></div>
+
+                <div class="panel-actions panel-actions-wrap">
+                    <button id="fw_flash" disabled>Flash</button>
+                    <button id="fw_reboot" class="secondary">Reboot device</button>
+                    <button id="fw_factory_reset" class="danger">Factory reset</button>
+                </div>
+                <div id="fw_action_status" class="status-message" aria-live="polite"></div>
+            </div>
+        </section>
     </main>
 
     <script src="main.js"></script>

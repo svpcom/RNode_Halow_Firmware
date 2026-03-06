@@ -21,12 +21,14 @@ html, body {
 
 .tabs {
     display: flex;
+    flex-wrap: wrap;
     background: #2a2d34;
     color: #fff;
 }
 
 .tabs button {
     flex: 1;
+    min-width: 160px;
     padding: 0.75rem 1rem;
     background: none;
     border: none;
@@ -51,15 +53,15 @@ html, body {
 }
 
 .fw-console{
-	background:#ffffff;
-	color:#000000;
-	font-family:monospace;
-	font-size:12px;
-	padding:8px;
-	height:180px;
-	overflow-y:auto;
-	border:1px solid #ccc;
-	border-radius:4px;
+    background:#ffffff;
+    color:#000000;
+    font-family:monospace;
+    font-size:12px;
+    padding:8px;
+    height:180px;
+    overflow-y:auto;
+    border:1px solid #ccc;
+    border-radius:4px;
 }
 
 main {
@@ -74,7 +76,6 @@ main {
     display: block;
 }
 
-/* Panels inside each tab */
 .panel {
     background: #fff;
     border: 1px solid #ddd;
@@ -141,6 +142,10 @@ fieldset h4 {
     gap: 0.5rem;
 }
 
+.panel-actions-wrap {
+    flex-wrap: wrap;
+}
+
 .panel-actions button {
     background: #2563eb;
     color: #fff;
@@ -156,7 +161,22 @@ fieldset h4 {
     background: #1e4db7;
 }
 
-/* Statistics tables */
+.panel-actions button.secondary {
+    background: #4b5563;
+}
+
+.panel-actions button.secondary:hover {
+    background: #374151;
+}
+
+.panel-actions button.danger {
+    background: #dc2626;
+}
+
+.panel-actions button.danger:hover {
+    background: #b91c1c;
+}
+
 .stats-table {
     width: 100%;
     border-collapse: collapse;
@@ -182,6 +202,44 @@ fieldset h4 {
     margin: 0.5rem 0;
 }
 
+.field-hint {
+    margin: -0.1rem 0 0.6rem;
+    font-size: 0.82rem;
+    color: #666;
+}
+
+.field-hint code {
+    font-size: 0.82rem;
+}
+
+.inline-link {
+    color: #2563eb;
+    text-decoration: none;
+}
+
+.inline-link:hover {
+    text-decoration: underline;
+}
+
+.status-message {
+    min-height: 1.2rem;
+    margin-top: 0.4rem;
+    font-size: 0.9rem;
+}
+
+.status-message.ok {
+    color: #166534;
+}
+
+.status-message.error {
+    color: #b91c1c;
+}
+
+.input-invalid {
+    border-color: #dc2626 !important;
+    background: #fff1f2 !important;
+}
+
 .panel-actions button:disabled {
     background: #9ca3af;
     cursor: not-allowed;
@@ -189,4 +247,15 @@ fieldset h4 {
 
 .panel-actions button:disabled:hover {
     background: #9ca3af;
+}
+
+
+fieldset:disabled {
+    opacity: 0.6;
+}
+
+fieldset:disabled input,
+fieldset:disabled select,
+fieldset:disabled textarea {
+    cursor: not-allowed;
 }

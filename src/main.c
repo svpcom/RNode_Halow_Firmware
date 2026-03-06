@@ -36,6 +36,8 @@
 #include "ota.h"
 #include "statistics.h"
 #include "indication.h"
+#include "telemetry.h"
+#include "utils.h"
 #ifdef MULTI_WAKEUP
 #include "lib/common/sleep_api.h"
 #include "hal/gpio.h"
@@ -169,6 +171,7 @@ __init int main(void) {
     net_ip_init();
     statistics_init();
     tcp_server_init(tcp_to_halow_send);
+    telemetry_init();
     OS_WORK_INIT(&main_wk, sys_blink_loop,0);
     os_run_work_delay(&main_wk, 1000);
     sysheap_collect_init(&sram_heap, (uint32)&__sinit, (uint32)&__einit); // delete init code from heap

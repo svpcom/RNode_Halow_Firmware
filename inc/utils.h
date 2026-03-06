@@ -13,4 +13,7 @@ int64_t get_time_ms(void);
 int64_t get_time_us(void);
 void get_mac(uint8_t mac[6]);
 
+void bin16_to_hex32( const uint8_t *in, char *out );
+int hex32_to_bin16( const char *in, uint8_t *out );
+
 #endif // __UTILS_H_

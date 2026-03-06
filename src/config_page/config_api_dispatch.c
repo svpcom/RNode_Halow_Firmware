@@ -72,12 +72,14 @@ static const char *api_uri_to_endpoint( const char *uri, char *tmp, size_t tmp_s
  */
 static const web_api_route_t s_api_routes[] = {
     //{ "stat_reset",  web_api_stat_reset,  NULL },
-    { "get_stat",   web_api_stat_get,       NULL },
-    { "get_all",    web_api_all_get,        NULL },
-    { "halow_cfg",  NULL,                   web_api_halow_cfg_post },
-    { "lbt_cfg",    NULL,                   web_api_lbt_cfg_post },
-    { "net_cfg",    NULL,                   web_api_net_cfg_post },
-    { "tcp_server_cfg",    NULL,            web_api_tcp_server_cfg_post },
+    { "get_stat",           web_api_stat_get,               NULL                        },
+    { "get_all",            web_api_all_get,                NULL                        },
+    { "halow_cfg",          web_api_halow_cfg_get,          web_api_halow_cfg_post      },
+    { "lbt_cfg",            web_api_lbt_cfg_get,            web_api_lbt_cfg_post        },
+    { "net_cfg",            web_api_net_cfg_get,            web_api_net_cfg_post        },
+    { "tcp_server_cfg",     web_api_tcp_server_cfg_get,     web_api_tcp_server_cfg_post },
+    { "telemetry_cfg",      web_api_telemetry_cfg_get,      web_api_telemetry_cfg_post  },
+    { "telemetry_send",     NULL,                           web_api_telemetry_send_post },
 
     { "ota_begin",  NULL,                   web_api_ota_begin_post },
     { "ota_chunk",  NULL,                   web_api_ota_chunk_post },

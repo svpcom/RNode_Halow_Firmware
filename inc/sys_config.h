@@ -19,6 +19,7 @@
 //#define DEFAULT_RAW_RECVMBOX_SIZE 8
 //#define MEMP_NUM_NETBUF 8
 #define LWIP_SO_RCVTIMEO 1
+#define MQTT_OUTPUT_RINGBUF_SIZE 1024
 //#define LWIP_DEBUG                  1
 //#define MEM_SIZE (8*1024)
 //#define PBUF_POOL_SIZE  16
@@ -108,6 +109,8 @@
 
 #define HALOW_LBT_LISTEN_TASK_PRIO    (OS_TASK_PRIORITY_IDLE)
 #define HALOW_LBT_LISTEN_TASK_STACK   (2*1024)
+
+#define TELEMETRY_WORK_PRIO             (10)
 
 // #define ANT_CTRL_PIN PB_1 // 网桥用PB1来做双天线选择
 
